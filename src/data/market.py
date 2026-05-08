@@ -9,9 +9,12 @@ from src.config import CACHE_TTL_FAST, CACHE_TTL_DAILY
 
 @st.cache_data(ttl=CACHE_TTL_FAST)
 def fetch_price_history(ticker: str, period: str = "20y") -> pd.DataFrame:
-    tk = yf.Ticker(ticker)
-    df = tk.history(period=period, auto_adjust=True)
-    return df[["Open", "High", "Low", "Close", "Volume"]].dropna()
+    try:
+        tk = yf.Ticker(ticker)
+        df = tk.history(period=period, auto_adjust=True)
+        return df[["Open", "High", "Low", "Close", "Volume"]].dropna()
+    except Exception:
+        return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
 
 
 @st.cache_data(ttl=CACHE_TTL_FAST)

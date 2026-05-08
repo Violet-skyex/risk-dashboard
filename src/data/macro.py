@@ -16,7 +16,7 @@ def fetch_fred_series(series_id: str, years: int = 22) -> pd.Series:
         data = fred.get_series(series_id, observation_start=start)
         return data.dropna()
     except Exception:
-        return pd.Series(dtype=float)
+        return pd.Series(dtype=float, index=pd.DatetimeIndex([]))
 
 
 @st.cache_data(ttl=CACHE_TTL_DAILY)
@@ -57,26 +57,30 @@ def fetch_cape_history(years: int = 22) -> pd.Series:
         cutoff = pd.Timestamp.today() - pd.DateOffset(years=years)
         return df["value"][df.index >= cutoff]
     except Exception:
-        return pd.Series(dtype=float)
+        return pd.Series(dtype=float, index=pd.DatetimeIndex([]))
 
 
 @st.cache_data(ttl=CACHE_TTL_DAILY)
 def compute_buffett_indicator() -> tuple[float, pd.Series]:
     """Returns (current_value_pct, historical_series)."""
-    wilshire = fetch_fred_series("WILL5000PR")
-    gdp = fetch_fred_series("GDP")
+    _empty = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
+    try:
+        wilshire = fetch_fred_series("WILL5000PR")
+        gdp      = fetch_fred_series("GDP")
+        if wilshire.empty or gdp.empty:
+            return float("nan"), _empty
 
-    # GDP is quarterly — forward fill to daily
-    gdp_daily = gdp.resample("D").interpolate(method="linear")
+        gdp_daily = gdp.resample("D").interpolate(method="linear")
+        combined  = pd.concat([wilshire, gdp_daily], axis=1, join="inner")
+        combined.columns = ["wilshire", "gdp"]
+        combined  = combined.dropna()
+        if combined.empty:
+            return float("nan"), _empty
 
-    # Align
-    combined = pd.concat([wilshire, gdp_daily], axis=1, join="inner")
-    combined.columns = ["wilshire", "gdp"]
-    combined = combined.dropna()
-
-    buffett = (combined["wilshire"] / combined["gdp"]) * 100
-    current = float(buffett.iloc[-1]) if len(buffett) else float("nan")
-    return current, buffett
+        buffett = (combined["wilshire"] / combined["gdp"]) * 100
+        return float(buffett.iloc[-1]), buffett
+    except Exception:
+        return float("nan"), _empty
 
 
 @st.cache_data(ttl=CACHE_TTL_DAILY)

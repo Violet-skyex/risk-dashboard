@@ -20,6 +20,9 @@ def percentile_of(current: float, history: pd.Series, higher_is_riskier: bool = 
 
 def dual_percentile(current: float, history: pd.Series, higher_is_riskier: bool = True) -> dict:
     """Returns both 5yr and 20yr percentiles."""
+    nan_result = {"pct_5yr": float("nan"), "pct_20yr": float("nan")}
+    if not isinstance(history.index, pd.DatetimeIndex) or len(history) < 10:
+        return nan_result
     now = pd.Timestamp.today()
     h5  = history[history.index >= now - pd.DateOffset(years=5)]
     h20 = history[history.index >= now - pd.DateOffset(years=20)]
