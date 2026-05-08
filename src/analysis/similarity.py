@@ -15,6 +15,14 @@ from src.config import CACHE_TTL_DAILY
 
 # ── helpers ─────────────────────────────────────────────────────────────────
 
+def _strip_tz(series: pd.Series) -> pd.Series:
+    """Remove timezone info from DatetimeIndex so mixed-tz joins don't fail."""
+    if isinstance(series.index, pd.DatetimeIndex) and series.index.tz is not None:
+        series = series.copy()
+        series.index = series.index.tz_localize(None)
+    return series
+
+
 def _norm(series: pd.Series) -> pd.Series:
     mn, mx = series.min(), series.max()
     if mx == mn:
@@ -33,15 +41,15 @@ def _build_macro_matrix() -> pd.DataFrame:
     from src.data.macro import fetch_all_macro, fetch_cape_history, compute_buffett_indicator
 
     macro = fetch_all_macro()
-    cape  = fetch_cape_history().resample("D").ffill()
+    cape  = _strip_tz(fetch_cape_history()).resample("D").ffill()
     _, buffett = compute_buffett_indicator()
-    buffett = buffett.resample("D").ffill()
+    buffett = _strip_tz(buffett).resample("D").ffill()
 
     df = pd.DataFrame({
         "cape":        cape,
         "buffett":     buffett,
-        "hy_spread":   macro["hy_spread"],
-        "ig_spread":   macro["ig_spread"],
+        "hy_spread":   _strip_tz(macro["hy_spread"]),
+        "ig_spread":   _strip_tz(macro["ig_spread"]),
     })
     df = df.ffill().dropna()
     for col in df.columns:
@@ -55,10 +63,10 @@ def _build_rates_matrix() -> pd.DataFrame:
     macro = fetch_all_macro()
 
     df = pd.DataFrame({
-        "yield_10y2y": macro["yield_curve_10y2y"],
-        "yield_10y3m": macro["yield_curve_10y3m"],
-        "fed_funds":   macro["fed_funds"],
-        "real_yield":  macro["real_yield_10y"],
+        "yield_10y2y": _strip_tz(macro["yield_curve_10y2y"]),
+        "yield_10y3m": _strip_tz(macro["yield_curve_10y3m"]),
+        "fed_funds":   _strip_tz(macro["fed_funds"]),
+        "real_yield":  _strip_tz(macro["real_yield_10y"]),
     })
     df = df.ffill().dropna()
     for col in df.columns:
@@ -70,7 +78,7 @@ def _build_rates_matrix() -> pd.DataFrame:
 def _build_sentiment_matrix() -> pd.DataFrame:
     from src.data.macro import fetch_all_macro
     macro = fetch_all_macro()
-    vix_hist = macro["vix_history"]
+    vix_hist = _strip_tz(macro["vix_history"])
 
     df = pd.DataFrame({"vix": vix_hist})
     df = df.dropna()
@@ -83,6 +91,8 @@ def _build_sentiment_matrix() -> pd.DataFrame:
 def _build_technical_matrix(ticker: str = "SPY") -> pd.DataFrame:
     from src.data.market import get_technical_history
     df = get_technical_history(ticker)
+    if isinstance(df.index, pd.DatetimeIndex) and df.index.tz is not None:
+        df.index = df.index.tz_localize(None)
     for col in df.columns:
         df[col] = _norm(df[col])
     return df

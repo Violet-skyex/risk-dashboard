@@ -95,7 +95,10 @@ def get_technical_history(ticker: str) -> pd.DataFrame:
     df["pct_ma200"]   = (close / close.rolling(200).mean() - 1) * 100
     df["momentum_12m"]= (close / close.shift(252) - 1) * 100
     df["distance_52w"]= (close / close.rolling(252).max() - 1) * 100
-    return df.dropna()
+    df = df.dropna()
+    if isinstance(df.index, pd.DatetimeIndex) and df.index.tz is not None:
+        df.index = df.index.tz_localize(None)
+    return df
 
 
 @st.cache_data(ttl=CACHE_TTL_FAST)

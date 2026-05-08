@@ -23,9 +23,13 @@ def dual_percentile(current: float, history: pd.Series, higher_is_riskier: bool 
     nan_result = {"pct_5yr": float("nan"), "pct_20yr": float("nan")}
     if not isinstance(history.index, pd.DatetimeIndex) or len(history) < 10:
         return nan_result
+    # Strip timezone so comparison with Timestamp.today() always works
+    hist = history.copy()
+    if hist.index.tz is not None:
+        hist.index = hist.index.tz_localize(None)
     now = pd.Timestamp.today()
-    h5  = history[history.index >= now - pd.DateOffset(years=5)]
-    h20 = history[history.index >= now - pd.DateOffset(years=20)]
+    h5  = hist[hist.index >= now - pd.DateOffset(years=5)]
+    h20 = hist[hist.index >= now - pd.DateOffset(years=20)]
     return {
         "pct_5yr":  percentile_of(current, h5,  higher_is_riskier),
         "pct_20yr": percentile_of(current, h20, higher_is_riskier),
