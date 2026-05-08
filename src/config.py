@@ -1,7 +1,19 @@
 import streamlit as st
 
-FRED_API_KEY = st.secrets["FRED_API_KEY"]
-NEWS_API_KEY = st.secrets["NEWS_API_KEY"]
+def _get_secret(key: str) -> str:
+    try:
+        return st.secrets[key]
+    except (KeyError, FileNotFoundError):
+        st.error(
+            f"Missing secret: `{key}`. "
+            "Go to **Manage app → Settings → Secrets** and add your API keys. "
+            "See the README for the required format.",
+            icon="🔑",
+        )
+        st.stop()
+
+FRED_API_KEY = _get_secret("FRED_API_KEY")
+NEWS_API_KEY = _get_secret("NEWS_API_KEY")
 
 DEFAULT_TICKERS = ["SPY", "QQQ"]
 
