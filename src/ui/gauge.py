@@ -75,12 +75,14 @@ def render_panic_bubble_chart(bubble_score: float, panic_score: float, lang: str
     ))
 
     fig.update_layout(
-        xaxis=dict(title=f"← Neutral   {bubble_label} →", range=[0, 100],
-                   showgrid=False, zeroline=False, tickfont=dict(size=10),
-                   titlefont=dict(color="#475569")),
-        yaxis=dict(title=f"← Neutral   {panic_label} →", range=[0, 100],
-                   showgrid=False, zeroline=False, tickfont=dict(size=10),
-                   titlefont=dict(color="#475569")),
+        xaxis=dict(
+            title=dict(text=f"← Neutral   {bubble_label} →", font=dict(color="#475569")),
+            range=[0, 100], showgrid=False, zeroline=False, tickfont=dict(size=10),
+        ),
+        yaxis=dict(
+            title=dict(text=f"← Neutral   {panic_label} →", font=dict(color="#475569")),
+            range=[0, 100], showgrid=False, zeroline=False, tickfont=dict(size=10),
+        ),
         height=280,
         margin=dict(l=60, r=20, t=20, b=50),
         paper_bgcolor="rgba(0,0,0,0)",
