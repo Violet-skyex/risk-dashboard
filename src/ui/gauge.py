@@ -100,6 +100,10 @@ def render_panic_bubble_chart(bubble_score: float, panic_score: float, lang: str
         fig.add_annotation(x=x, y=y, text=f"<i>{txt}</i>",
                            showarrow=False, font=dict(color="#94a3b8", size=10))
 
+    # Disable zoom so the chart can't get stuck in a zoomed state
+    fig.update_xaxes(fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
+
     return fig
 
 

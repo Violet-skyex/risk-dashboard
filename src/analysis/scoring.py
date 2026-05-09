@@ -24,26 +24,36 @@ def score_macro_layer(ticker: str = "SPY") -> dict:
     """Valuation + macro cycle risk."""
     snap = get_macro_snapshot()
     macro = fetch_all_macro()
-    cape_hist = fetch_cape_history()
-    _, buffett_hist = compute_buffett_indicator()
 
-    cape_pct   = dual_percentile(snap["cape"],    cape_hist,                True)
-    buffett_pct= dual_percentile(snap["buffett"], buffett_hist,             True)
+    # Always-available FRED indicators
+    unemp_pct = dual_percentile(snap["unemployment"], macro["unemployment"], True)
+
+    cpi_series = macro["cpi"]
+    cpi_yoy_s  = ((cpi_series / cpi_series.shift(12)) - 1) * 100
+    cpi_pct    = dual_percentile(snap["cpi_yoy"], cpi_yoy_s.dropna(), True)
+
+    # Optional scraped/computed indicators (may fail on Streamlit Cloud)
+    cape_hist    = fetch_cape_history()
+    _, buffett_hist = compute_buffett_indicator()
+    cape_pct     = dual_percentile(snap["cape"],    cape_hist,    True)
+    buffett_pct  = dual_percentile(snap["buffett"], buffett_hist, True)
 
     indicators = {
         "cape": {
-            "label":   "indicator_cape",
-            "current": snap["cape"],
-            "unit":    "x",
-            **cape_pct,
-            "risk_score": cape_pct["pct_20yr"],
+            "label": "indicator_cape", "current": snap["cape"], "unit": "x",
+            **cape_pct, "risk_score": cape_pct["pct_20yr"],
         },
         "buffett": {
-            "label":   "indicator_buffett",
-            "current": snap["buffett"],
-            "unit":    "%",
-            **buffett_pct,
-            "risk_score": buffett_pct["pct_20yr"],
+            "label": "indicator_buffett", "current": snap["buffett"], "unit": "%",
+            **buffett_pct, "risk_score": buffett_pct["pct_20yr"],
+        },
+        "unemployment": {
+            "label": "Unemployment Rate", "current": snap["unemployment"], "unit": "%",
+            **unemp_pct, "risk_score": unemp_pct["pct_20yr"],
+        },
+        "cpi_yoy": {
+            "label": "CPI YoY", "current": snap["cpi_yoy"], "unit": "%",
+            **cpi_pct, "risk_score": cpi_pct["pct_20yr"],
         },
     }
 

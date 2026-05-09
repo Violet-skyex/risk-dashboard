@@ -83,15 +83,19 @@ with st.spinner(t("loading", lang)):
     for tk in tickers_to_show:
         scores[tk] = compute_composite_score(tk)
 
-    pb = classify_panic_bubble(tickers_to_show[-1])   # use primary ticker for panic/bubble
+    # Panic/Bubble: one per ticker
+    pb = {tk: classify_panic_bubble(tk) for tk in tickers_to_show}
 
-    # Historical scenarios keyed to primary analysis ticker (SPX proxy = SPY)
-    primary = tickers_to_show[-1] if ticker else "SPY"
     scenarios = find_historical_scenarios("SPY", top_n=5)
 
     earnings = {}
     if ticker and ticker not in ("SPY", "QQQ"):
         earnings[ticker] = get_earnings_risk(ticker)
+
+char_map_en = {"bubble": "Bubble / Euphoria", "panic": "Panic / Fear",
+               "volatile": "Volatile", "neutral": "Neutral"}
+char_map_cn = {"bubble": "泡沫 / 狂热", "panic": "恐慌 / 恐惧",
+               "volatile": "双向高压", "neutral": "中性"}
 
 # ═══════════════════════════════════════════════════════════════════
 # SECTION 1 — RISK GAUGES
@@ -106,29 +110,23 @@ for i, tk in enumerate(tickers_to_show):
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 # ═══════════════════════════════════════════════════════════════════
-# SECTION 2 — PANIC / BUBBLE POSITIONING
+# SECTION 2 — PANIC / BUBBLE POSITIONING (one per ticker)
 # ═══════════════════════════════════════════════════════════════════
 st.markdown(f"<div class='section-title'>{t('panic_bubble', lang)}</div>", unsafe_allow_html=True)
 
-pb_col1, pb_col2 = st.columns([1, 2])
-with pb_col1:
-    bscore = pb["bubble_score"]
-    pscore = pb["panic_score"]
-    char   = pb["character"]
-
-    char_map_en = {"bubble": "Bubble / Euphoria", "panic": "Panic / Fear",
-                   "volatile": "Volatile", "neutral": "Neutral"}
-    char_map_cn = {"bubble": "泡沫 / 狂热", "panic": "恐慌 / 恐惧",
-                   "volatile": "双向高压", "neutral": "中性"}
-    char_label = (char_map_cn if lang == "CN" else char_map_en).get(char, char)
-
-    st.metric(t("bubble_score", lang), f"{bscore:.0f} / 100")
-    st.metric(t("panic_score",  lang), f"{pscore:.0f} / 100")
-    st.markdown(f"**{t('panic_bubble', lang)}:** {char_label}")
-
-with pb_col2:
-    pb_fig = render_panic_bubble_chart(bscore, pscore, lang)
-    st.plotly_chart(pb_fig, use_container_width=True, config={"displayModeBar": False})
+pb_cols = st.columns(len(tickers_to_show))
+for i, tk in enumerate(tickers_to_show):
+    with pb_cols[i]:
+        p = pb[tk]
+        bscore = p["bubble_score"]
+        pscore = p["panic_score"]
+        char_label = (char_map_cn if lang == "CN" else char_map_en).get(p["character"], p["character"])
+        st.markdown(f"**{tk}** — {char_label}")
+        c1, c2 = st.columns(2)
+        c1.metric(t("bubble_score", lang), f"{bscore:.0f}")
+        c2.metric(t("panic_score",  lang), f"{pscore:.0f}")
+        pb_fig = render_panic_bubble_chart(bscore, pscore, lang)
+        st.plotly_chart(pb_fig, use_container_width=True, config={"displayModeBar": False})
 
 # ═══════════════════════════════════════════════════════════════════
 # SECTION 3 — FACTOR BREAKDOWN (columns per ticker)

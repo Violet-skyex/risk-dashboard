@@ -41,17 +41,35 @@ def _build_macro_matrix() -> pd.DataFrame:
     from src.data.macro import fetch_all_macro, fetch_cape_history, compute_buffett_indicator
 
     macro = fetch_all_macro()
-    cape  = _strip_tz(fetch_cape_history()).resample("D").ffill()
-    _, buffett = compute_buffett_indicator()
-    buffett = _strip_tz(buffett).resample("D").ffill()
 
-    df = pd.DataFrame({
-        "cape":        cape,
-        "buffett":     buffett,
-        "hy_spread":   _strip_tz(macro["hy_spread"]),
-        "ig_spread":   _strip_tz(macro["ig_spread"]),
-    })
+    # Stable FRED series — always available
+    cpi      = _strip_tz(macro["cpi"])
+    cpi_yoy  = ((cpi / cpi.shift(12)) - 1) * 100
+    series   = {
+        "unemployment": _strip_tz(macro["unemployment"]),
+        "cpi_yoy":      cpi_yoy.dropna(),
+    }
+
+    # Optional: CAPE and Buffett (scraping may fail on cloud)
+    try:
+        cape = _strip_tz(fetch_cape_history())
+        if len(cape) > 50:
+            series["cape"] = cape.resample("D").ffill()
+    except Exception:
+        pass
+
+    try:
+        _, buffett = compute_buffett_indicator()
+        b = _strip_tz(buffett)
+        if len(b) > 50:
+            series["buffett"] = b.resample("D").ffill()
+    except Exception:
+        pass
+
+    df = pd.DataFrame(series)
     df = df.ffill().dropna()
+    if df.empty:
+        return df
     for col in df.columns:
         df[col] = _norm(df[col])
     return df
@@ -101,22 +119,28 @@ def _build_technical_matrix(ticker: str = "SPY") -> pd.DataFrame:
 # ── current-state vectors ────────────────────────────────────────────────────
 
 def _current_macro_vec(macro_matrix: pd.DataFrame) -> np.ndarray:
-    from src.data.macro import get_macro_snapshot, fetch_cape_history, compute_buffett_indicator
-    snap = get_macro_snapshot()
-    cape_hist = fetch_cape_history()
-    _, buffett_hist = compute_buffett_indicator()
+    from src.data.macro import get_macro_snapshot, fetch_cape_history, compute_buffett_indicator, fetch_all_macro
+    snap  = get_macro_snapshot()
+    macro = fetch_all_macro()
 
-    def norm_val(val, series):
-        mn, mx = series.min(), series.max()
-        if mx == mn: return 0.5
+    def nv(val, series):
+        s = _strip_tz(series).dropna()
+        mn, mx = s.min(), s.max()
+        if mx == mn or np.isnan(float(val) if val is not None else np.nan):
+            return 0.5
         return float(np.clip((val - mn) / (mx - mn), 0, 1))
 
-    return np.array([
-        norm_val(snap["cape"],       fetch_cape_history()),
-        norm_val(snap["buffett"],    buffett_hist),
-        norm_val(snap["hy_spread"],  _raw_series("hy_spread")),
-        norm_val(snap["ig_spread"],  _raw_series("ig_spread")),
-    ])
+    cpi     = macro["cpi"]
+    cpi_yoy = ((cpi / cpi.shift(12)) - 1) * 100
+
+    lookup = {
+        "unemployment": lambda: nv(snap["unemployment"], macro["unemployment"]),
+        "cpi_yoy":      lambda: nv(snap["cpi_yoy"],     cpi_yoy),
+        "cape":         lambda: nv(snap["cape"],         fetch_cape_history()),
+        "buffett":      lambda: nv(snap["buffett"],      compute_buffett_indicator()[1]),
+    }
+
+    return np.array([lookup.get(col, lambda: 0.5)() for col in macro_matrix.columns])
 
 
 def _current_rates_vec() -> np.ndarray:
