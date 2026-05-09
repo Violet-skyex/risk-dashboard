@@ -241,13 +241,14 @@ def find_historical_scenarios(ticker: str = "SPY", top_n: int = 5) -> list[dict]
         .intersection(sentiment_m.index) \
         .intersection(technical_m.index)
 
-    # Need at least 1 year of history after each date for outcome computation
+    # Fetch this ticker's price history for outcome computation
     from src.data.market import fetch_price_history
-    spy_close = fetch_price_history("SPY", "22y")["Close"]
-    # Strip tz from spy_close so it matches tz-naive common index
-    if isinstance(spy_close.index, pd.DatetimeIndex) and spy_close.index.tz is not None:
-        spy_close.index = spy_close.index.tz_localize(None)
-    last_valid = spy_close.index[-252] if len(spy_close) > 252 else spy_close.index[-1]
+    price_close = fetch_price_history(ticker, "22y")["Close"]
+    if isinstance(price_close.index, pd.DatetimeIndex) and price_close.index.tz is not None:
+        price_close.index = price_close.index.tz_localize(None)
+
+    # Only use dates where we have at least 1 year of subsequent price data
+    last_valid = price_close.index[-252] if len(price_close) > 252 else price_close.index[-1]
     common = common[common <= last_valid]
 
     if len(common) < 50:
@@ -269,7 +270,6 @@ def find_historical_scenarios(ticker: str = "SPY", top_n: int = 5) -> list[dict]
         if date in excluded:
             continue
         selected.append(date)
-        # Exclude nearby dates
         window = pd.date_range(date - pd.Timedelta(days=90), date + pd.Timedelta(days=90), freq="D")
         excluded.update(window)
         if len(selected) >= top_n:
@@ -277,7 +277,7 @@ def find_historical_scenarios(ticker: str = "SPY", top_n: int = 5) -> list[dict]
 
     scenarios = []
     for date in selected:
-        outcome = _compute_outcome(date, spy_close)
+        outcome = _compute_outcome(date, price_close)   # outcome is now per-ticker
         scenarios.append({
             "date":           date.strftime("%Y-%m-%d"),
             "composite_sim":  round(float(composite_sim[date]) * 100, 1),

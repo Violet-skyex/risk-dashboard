@@ -86,7 +86,7 @@ with st.spinner(t("loading", lang)):
     # Panic/Bubble: one per ticker
     pb = {tk: classify_panic_bubble(tk) for tk in tickers_to_show}
 
-    scenarios = find_historical_scenarios("SPY", top_n=5)
+    scenarios = {tk: find_historical_scenarios(tk, top_n=5) for tk in tickers_to_show}
 
     earnings = {}
     if ticker and ticker not in ("SPY", "QQQ"):
@@ -160,27 +160,30 @@ for i, tk in enumerate(tickers_to_show):
                 e2.metric(t("revision_trend", lang), er.get("revision_trend", "N/A"))
 
 # ═══════════════════════════════════════════════════════════════════
-# SECTION 4 — HISTORICAL SCENARIOS
+# SECTION 4 — HISTORICAL SCENARIOS (tabs per ticker)
 # ═══════════════════════════════════════════════════════════════════
 st.markdown(f"<div class='section-title'>{t('scenarios', lang)}</div>", unsafe_allow_html=True)
 
-render_scenarios(scenarios, lang)
+dd_caption = (
+    "Each bar = one historical analogue period. Bar height = max drawdown of this ticker "
+    "in the 12 months after that period started. Similarity is computed per-ticker "
+    "(macro + rates + sentiment layers are market-wide; technical layer is ticker-specific)."
+) if lang == "EN" else (
+    "每根柱子代表一个历史相似情景，高度为该情景后12个月内该标的最大回撤。"
+    "相似度按该标的计算（宏观/利率/情绪层为市场共通，技术层为该标的专属）。"
+)
 
-# Drawdown distribution chart
-if scenarios:
-    st.markdown("<div class='divider'></div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='section-title'>{t('drawdown_dist', lang)}</div>", unsafe_allow_html=True)
-    dd_caption = (
-        "Each bar is one historical analogue period (x-axis = when it occurred). "
-        "The bar height shows the worst SPY drawdown in the 12 months after that period started. "
-        "This is NOT SPY vs QQQ vs your stock — it is the same SPY across different historical time windows."
-    ) if lang == "EN" else (
-        "每根柱子代表一个历史相似情景（x轴为发生时间），柱子高度为该情景开始后12个月内标普500的最大回撤。"
-        "这不是SPY/QQQ/个股的对比，而是同一个SPY在不同历史时期的表现。"
-    )
-    st.caption(dd_caption)
-    dd_fig = render_drawdown_distribution(scenarios, lang)
-    st.plotly_chart(dd_fig, use_container_width=True, config={"displayModeBar": False})
+scenario_tabs = st.tabs(tickers_to_show)
+for tab, tk in zip(scenario_tabs, tickers_to_show):
+    with tab:
+        tk_scenarios = scenarios[tk]
+        render_scenarios(tk_scenarios, lang)
+        if tk_scenarios:
+            st.markdown("<div class='divider'></div>", unsafe_allow_html=True)
+            st.markdown(f"**{t('drawdown_dist', lang)}**")
+            st.caption(dd_caption)
+            dd_fig = render_drawdown_distribution(tk_scenarios, lang, ticker=tk)
+            st.plotly_chart(dd_fig, use_container_width=True, config={"displayModeBar": False})
 
 # ═══════════════════════════════════════════════════════════════════
 # SECTION 5 — HEDGING INSTRUMENTS

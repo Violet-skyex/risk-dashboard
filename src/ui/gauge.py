@@ -107,7 +107,7 @@ def render_panic_bubble_chart(bubble_score: float, panic_score: float, lang: str
     return fig
 
 
-def render_drawdown_distribution(scenarios: list[dict], lang: str = "EN") -> go.Figure:
+def render_drawdown_distribution(scenarios: list[dict], lang: str = "EN", ticker: str = "SPY") -> go.Figure:
     if not scenarios:
         return go.Figure()
 
@@ -120,9 +120,9 @@ def render_drawdown_distribution(scenarios: list[dict], lang: str = "EN") -> go.
     labels, max_dds, sims = zip(*rows)
 
     title = (
-        "SPY Max Drawdown in 12M After Each Historical Analogue"
+        f"{ticker} Max Drawdown in 12M After Each Historical Analogue"
         if lang == "EN" else
-        "各历史相似情景后12个月内SPY最大回撤"
+        f"各历史相似情景后12个月内{ticker}最大回撤"
     )
     fig = px.bar(
         x=list(labels), y=list(max_dds),
