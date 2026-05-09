@@ -5,7 +5,7 @@ import numpy as np
 from src.i18n import t
 
 
-def render_scenarios(scenarios: list[dict], lang: str = "EN"):
+def render_scenarios(scenarios: list[dict], lang: str = "EN", ticker: str = "SPY"):
     if not scenarios:
         msg = "Insufficient historical data to find analogues." if lang == "EN" \
               else "历史数据不足，无法找到相似情景。"
@@ -13,19 +13,19 @@ def render_scenarios(scenarios: list[dict], lang: str = "EN"):
         return
 
     intro = (
-        "Each scenario is a historical period where market conditions were most similar to today, "
-        "ranked by composite similarity across macro, rates, sentiment, and technical layers. "
-        "Forward returns and drawdowns show what SPY did in the 12 months after that period."
+        f"Each scenario is a historical period where market conditions were most similar to today, "
+        f"ranked by composite similarity across macro, rates, sentiment, and technical layers. "
+        f"Forward returns and drawdowns show what {ticker} did in the 12 months after that period."
     ) if lang == "EN" else (
-        "以下每个情景为历史上与当前市场结构最相似的时期，按宏观、利率、情绪、技术面四层向量综合相似度排序。"
-        "前瞻收益和回撤数据为该时期后12个月内标普500的实际表现。"
+        f"以下每个情景为历史上与当前市场结构最相似的时期，按宏观、利率、情绪、技术面四层向量综合相似度排序。"
+        f"前瞻收益和回撤数据为该时期后12个月内 {ticker} 的实际表现。"
     )
     st.caption(intro)
 
-    fwd3_lbl  = t("fwd_return_3m",  lang)
-    fwd12_lbl = t("fwd_return_12m", lang)
-    dd_lbl    = t("max_dd",         lang)
-    dur_lbl   = t("dd_duration",    lang)
+    fwd3_lbl  = f"{ticker} 3M Return"  if lang == "EN" else f"{ticker} 3个月收益"
+    fwd12_lbl = f"{ticker} 12M Return" if lang == "EN" else f"{ticker} 12个月收益"
+    dd_lbl    = t("max_dd",       lang)
+    dur_lbl   = t("dd_duration",  lang)
     rec_lbl   = "Recovery to prior high" if lang == "EN" else "恢复至前高"
 
     macro_lbl = t("scenario_macro",     lang)

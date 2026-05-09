@@ -177,7 +177,7 @@ scenario_tabs = st.tabs(tickers_to_show)
 for tab, tk in zip(scenario_tabs, tickers_to_show):
     with tab:
         tk_scenarios = scenarios[tk]
-        render_scenarios(tk_scenarios, lang)
+        render_scenarios(tk_scenarios, lang, ticker=tk)
         if tk_scenarios:
             st.markdown("<div class='divider'></div>", unsafe_allow_html=True)
             st.markdown(f"**{t('drawdown_dist', lang)}**")
