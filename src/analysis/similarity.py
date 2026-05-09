@@ -220,6 +220,9 @@ def find_historical_scenarios(ticker: str = "SPY", top_n: int = 5) -> list[dict]
     # Need at least 1 year of history after each date for outcome computation
     from src.data.market import fetch_price_history
     spy_close = fetch_price_history("SPY", "22y")["Close"]
+    # Strip tz from spy_close so it matches tz-naive common index
+    if isinstance(spy_close.index, pd.DatetimeIndex) and spy_close.index.tz is not None:
+        spy_close.index = spy_close.index.tz_localize(None)
     last_valid = spy_close.index[-252] if len(spy_close) > 252 else spy_close.index[-1]
     common = common[common <= last_valid]
 

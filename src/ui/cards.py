@@ -8,15 +8,15 @@ from src.config import risk_color
 
 def _pct_badge(pct: float) -> str:
     if np.isnan(pct):
-        return "<span style='color:#888'>N/A</span>"
+        return "<span style='color:#94a3b8'>N/A</span>"
     if pct >= 80:
-        color = "#e74c3c"
+        color = "#dc2626"
     elif pct >= 60:
-        color = "#e67e22"
+        color = "#ea580c"
     elif pct >= 40:
-        color = "#f1c40f"
+        color = "#ca8a04"
     else:
-        color = "#2ecc71"
+        color = "#16a34a"
     return f"<span style='color:{color};font-weight:700'>{pct:.0f}%</span>"
 
 
@@ -26,9 +26,10 @@ def _score_bar(score: float, width_px: int = 120) -> str:
     color = risk_color(score)
     filled = int(score / 100 * width_px)
     return (
-        f"<div style='background:#2a2a3e;border-radius:4px;width:{width_px}px;height:8px;display:inline-block'>"
-        f"<div style='background:{color};width:{filled}px;height:8px;border-radius:4px'></div>"
-        f"</div>"
+        f"<div style='background:#e2e8f0;border-radius:4px;width:{width_px}px;"
+        f"height:8px;display:inline-block'>"
+        f"<div style='background:{color};width:{filled}px;height:8px;border-radius:4px'>"
+        f"</div></div>"
     )
 
 
@@ -37,13 +38,13 @@ def render_layer_card(layer_key: str, layer_data: dict, lang: str = "EN"):
     score = layer_data.get("score", float("nan"))
     indicators = layer_data.get("indicators", {})
 
-    color = risk_color(score) if not np.isnan(score) else "#888"
+    color = risk_color(score) if not np.isnan(score) else "#94a3b8"
     score_str = f"{score:.0f}" if not np.isnan(score) else "N/A"
 
     header_html = (
         f"<div style='display:flex;align-items:center;justify-content:space-between;"
         f"padding:8px 0'>"
-        f"<span style='font-weight:700;font-size:1em;color:#cdd6f4'>{layer_name}</span>"
+        f"<span style='font-weight:700;font-size:1em;color:#1e293b'>{layer_name}</span>"
         f"<span style='color:{color};font-weight:800;font-size:1.1em'>{score_str}</span>"
         f"</div>"
     )
@@ -61,7 +62,7 @@ def _render_indicator_table(indicators: dict, lang: str):
 
     header = (
         f"<table style='width:100%;border-collapse:collapse;font-size:0.82em'>"
-        f"<thead><tr style='color:#888;border-bottom:1px solid #333'>"
+        f"<thead><tr style='color:#64748b;border-bottom:1px solid #e2e8f0'>"
         f"<th style='text-align:left;padding:4px'>Indicator</th>"
         f"<th style='text-align:right;padding:4px'>{cur_lbl}</th>"
         f"<th style='text-align:right;padding:4px'>{pct_5yr}</th>"
@@ -70,17 +71,21 @@ def _render_indicator_table(indicators: dict, lang: str):
     )
     rows = ""
     for key, ind in indicators.items():
-        label    = t(ind.get("label", key), lang) if ind.get("label") else key
-        current  = ind.get("current", float("nan"))
-        unit     = ind.get("unit", "")
-        p5       = ind.get("pct_5yr",  float("nan"))
-        p20      = ind.get("pct_20yr", float("nan"))
+        label   = t(ind.get("label", key), lang) if ind.get("label") else key
+        current = ind.get("current", float("nan"))
+        unit    = ind.get("unit", "")
+        p5      = ind.get("pct_5yr",  float("nan"))
+        p20     = ind.get("pct_20yr", float("nan"))
 
-        cur_str = f"{current:.2f}{unit}" if not np.isnan(float(current) if current is not None else float("nan")) else "N/A"
+        try:
+            cur_str = f"{float(current):.2f}{unit}" if current is not None and not np.isnan(float(current)) else "N/A"
+        except (TypeError, ValueError):
+            cur_str = "N/A"
+
         rows += (
-            f"<tr style='border-bottom:1px solid #222'>"
-            f"<td style='padding:5px 4px;color:#cdd6f4'>{label}</td>"
-            f"<td style='text-align:right;padding:5px 4px;color:#a6e3a1'>{cur_str}</td>"
+            f"<tr style='border-bottom:1px solid #f1f5f9'>"
+            f"<td style='padding:5px 4px;color:#1e293b'>{label}</td>"
+            f"<td style='text-align:right;padding:5px 4px;color:#0f766e;font-weight:600'>{cur_str}</td>"
             f"<td style='text-align:right;padding:5px 4px'>{_pct_badge(p5)}</td>"
             f"<td style='text-align:right;padding:5px 4px'>{_pct_badge(p20)}</td>"
             f"</tr>"
@@ -97,11 +102,11 @@ def render_news_card(news_data: dict, lang: str = "EN"):
     articles = news_data.get("raw_sentiment", {}).get("articles", [])
 
     risk_score = news_data.get("score", float("nan"))
-    color = risk_color(risk_score) if not np.isnan(risk_score) else "#888"
+    color = risk_color(risk_score) if not np.isnan(risk_score) else "#94a3b8"
 
     st.markdown(
         f"<div style='display:flex;justify-content:space-between;align-items:center'>"
-        f"<span style='font-weight:700;color:#cdd6f4'>{t('layer_news', lang)}</span>"
+        f"<span style='font-weight:700;color:#1e293b'>{t('layer_news', lang)}</span>"
         f"<span style='color:{color};font-weight:800;font-size:1.1em'>"
         f"{'N/A' if np.isnan(risk_score) else f'{risk_score:.0f}'}</span>"
         f"</div>",

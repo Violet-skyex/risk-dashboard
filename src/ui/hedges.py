@@ -38,14 +38,13 @@ def render_hedge_tools(ticker: str, lang: str = "EN"):
     is_stock = ticker not in ("SPY", "QQQ", "^SPX", "^GSPC", "")
 
     st.markdown(
-        f"<p style='color:#888;font-size:0.82em;margin-bottom:8px'>"
+        f"<p style='color:#64748b;font-size:0.82em;margin-bottom:8px'>"
         f"{'Informational only — not investment advice.' if lang=='EN' else '仅供参考，不构成投资建议。'}"
         f"</p>",
         unsafe_allow_html=True,
     )
 
     tool_set = HEDGE_TOOLS["broad_market"]
-
     category = tool_set["EN"] if lang == "EN" else tool_set["CN"]
     st.markdown(f"**{category}**")
     _render_tool_table(tool_set["instruments"], lang, ticker)
@@ -69,21 +68,21 @@ def _render_tool_table(instruments: list, lang: str, ticker: str):
 
     html = (
         f"<table style='width:100%;border-collapse:collapse;font-size:0.82em'>"
-        f"<thead><tr style='color:#888;border-bottom:1px solid #333'>"
+        f"<thead><tr style='color:#64748b;border-bottom:1px solid #e2e8f0'>"
         f"<th style='text-align:left;padding:4px'>Instrument</th>"
         f"<th style='text-align:left;padding:4px'>{type_lbl}</th>"
         f"<th style='text-align:left;padding:4px'>{desc_lbl}</th>"
         f"</tr></thead><tbody>"
     )
     for item in instruments:
-        name = item["name"]
+        name  = item["name"]
         itype = item["type"]
-        desc = item["desc_CN"] if lang == "CN" else item["desc_EN"]
+        desc  = item["desc_CN"] if lang == "CN" else item["desc_EN"]
         html += (
-            f"<tr style='border-bottom:1px solid #1a1a2e'>"
-            f"<td style='padding:5px 4px;color:#cba6f7;font-weight:600'>{name}</td>"
-            f"<td style='padding:5px 4px;color:#89b4fa'>{itype}</td>"
-            f"<td style='padding:5px 4px;color:#a6adc8'>{desc}</td>"
+            f"<tr style='border-bottom:1px solid #f1f5f9'>"
+            f"<td style='padding:5px 4px;color:#7c3aed;font-weight:600'>{name}</td>"
+            f"<td style='padding:5px 4px;color:#2563eb'>{itype}</td>"
+            f"<td style='padding:5px 4px;color:#475569'>{desc}</td>"
             f"</tr>"
         )
     html += "</tbody></table>"

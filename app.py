@@ -13,18 +13,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── dark theme CSS ───────────────────────────────────────────────────────────
+# ── light theme CSS ──────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  [data-testid="stAppViewContainer"] { background-color: #1e1e2e; }
-  [data-testid="stSidebar"]          { background-color: #181825; }
-  .stMetric label   { color: #a6adc8 !important; font-size: 0.78em !important; }
-  .stMetric > div   { color: #cdd6f4 !important; }
-  .stExpander       { border: 1px solid #313244 !important; border-radius: 8px !important; }
-  h1,h2,h3,h4      { color: #cdd6f4 !important; }
-  .section-title    { color: #89b4fa; font-weight: 700; font-size: 1.05em;
-                      border-bottom: 1px solid #313244; padding-bottom: 4px; margin: 16px 0 10px 0; }
-  .divider          { border-top: 1px solid #313244; margin: 20px 0; }
+  .stExpander    { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; }
+  .section-title { color: #2563eb; font-weight: 700; font-size: 1.05em;
+                   border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin: 16px 0 10px 0; }
+  .divider       { border-top: 1px solid #e2e8f0; margin: 20px 0; }
 </style>
 """, unsafe_allow_html=True)
 
