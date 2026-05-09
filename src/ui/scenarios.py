@@ -62,8 +62,8 @@ def render_scenarios(scenarios: list[dict], lang: str = "EN", ticker: str = "SPY
             st.markdown("---")
 
             # ── SPY forward performance ───────────────────────────────
-            perf_hdr = "SPY Forward Performance After This Period" if lang == "EN" \
-                       else "该时期后标普500表现"
+            perf_hdr = f"{ticker} Forward Performance After This Period" if lang == "EN" \
+                       else f"该时期后 {ticker} 表现"
             st.markdown(f"**{perf_hdr}**")
             o1, o2, o3, o4 = st.columns(4)
 
