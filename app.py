@@ -170,6 +170,15 @@ render_scenarios(scenarios, lang)
 if scenarios:
     st.markdown("<div class='divider'></div>", unsafe_allow_html=True)
     st.markdown(f"<div class='section-title'>{t('drawdown_dist', lang)}</div>", unsafe_allow_html=True)
+    dd_caption = (
+        "Each bar is one historical analogue period (x-axis = when it occurred). "
+        "The bar height shows the worst SPY drawdown in the 12 months after that period started. "
+        "This is NOT SPY vs QQQ vs your stock — it is the same SPY across different historical time windows."
+    ) if lang == "EN" else (
+        "每根柱子代表一个历史相似情景（x轴为发生时间），柱子高度为该情景开始后12个月内标普500的最大回撤。"
+        "这不是SPY/QQQ/个股的对比，而是同一个SPY在不同历史时期的表现。"
+    )
+    st.caption(dd_caption)
     dd_fig = render_drawdown_distribution(scenarios, lang)
     st.plotly_chart(dd_fig, use_container_width=True, config={"displayModeBar": False})
 

@@ -111,21 +111,26 @@ def render_drawdown_distribution(scenarios: list[dict], lang: str = "EN") -> go.
     if not scenarios:
         return go.Figure()
 
-    max_dds = [s["max_dd"] for s in scenarios
-               if s.get("max_dd") is not None and not np.isnan(s.get("max_dd", np.nan))]
-    labels  = [s["date"][:7] for s in scenarios
-               if s.get("max_dd") is not None and not np.isnan(s.get("max_dd", np.nan))]
-
-    if not max_dds:
+    rows = [(s["date"][:7], s["max_dd"], s.get("composite_sim", 0))
+            for s in scenarios
+            if s.get("max_dd") is not None and not np.isnan(s.get("max_dd", np.nan))]
+    if not rows:
         return go.Figure()
 
-    title = "Max Drawdown by Historical Analogue" if lang == "EN" else "各历史情景最大回撤"
+    labels, max_dds, sims = zip(*rows)
+
+    title = (
+        "SPY Max Drawdown in 12M After Each Historical Analogue"
+        if lang == "EN" else
+        "各历史相似情景后12个月内SPY最大回撤"
+    )
     fig = px.bar(
-        x=labels, y=max_dds,
-        labels={"x": "Period", "y": "Max Drawdown (%)"},
-        color=max_dds,
+        x=list(labels), y=list(max_dds),
+        labels={"x": "Historical Analogue Start", "y": "Max Drawdown (%)"},
+        color=list(max_dds),
         color_continuous_scale=["#2ecc71", "#f1c40f", "#e67e22", "#e74c3c"],
         title=title,
+        hover_data={"Similarity": [f"{s:.0f}%" for s in sims]},
     )
     fig.update_layout(
         height=260,
